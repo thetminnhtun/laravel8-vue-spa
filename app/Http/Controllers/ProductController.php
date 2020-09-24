@@ -19,22 +19,19 @@ class ProductController extends Controller
         return $product;
     }
 
-    public function show($id)
+    public function show(Product $product)
     {
-        $product = Product::find($id);
         return $product;
     }
 
-    public function update(ProductUpdateRequest $request, $id)
+    public function update(ProductUpdateRequest $request, Product $product)
     {
-        $product = Product::find($id);
         $product->update($request->only('name', 'price'));
         return $product;
     }
 
-    public function destroy($id)
+    public function destroy(Product $product)
     {
-        $product = Product::find($id);
         $product->delete();
         return $product;
     }
