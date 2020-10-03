@@ -1,5 +1,6 @@
 <template>
     <div class="container my-5">
+        <!-- Create -->
         <div class="row justify-content-end mb-3">
             <div class="col-4">
                 <button class="btn btn-primary" @click="create">
@@ -7,9 +8,10 @@
                 </button>
             </div>
             <div class="col-4">
-                <form>
+                <form @submit.prevent="view">
                     <div class="input-group">
                         <input
+                            v-model="search"
                             type="text"
                             placeholder="Search"
                             class="form-control"
@@ -23,6 +25,9 @@
                 </form>
             </div>
         </div>
+        <!-- Create End -->
+
+        <!-- Table -->
         <div class="row">
             <div class="col-4">
                 <div class="card">
@@ -55,7 +60,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="product in products" :key="product.id">
+                        <tr v-for="product in products.data" :key="product.id">
                             <td>{{ product.id }}</td>
                             <td>{{ product.name }}</td>
                             <td>{{ product.price }}</td>
@@ -70,8 +75,13 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <pagination :data="products" @pagination-change-page="view"></pagination>
             </div>
         </div>
+         <!-- Table End-->
+
+        
     </div>
 </template>
 
@@ -81,7 +91,8 @@ export default {
     data() {
         return {
             isEditMode: false,
-            products: [],
+            search: '',
+            products: {},
             product: {
                 id: '',
                 name: '',
@@ -90,8 +101,8 @@ export default {
         }
     },
     methods: {
-        view() {
-            axios.get('/api/product')
+        view(page = 1) {
+            axios.get(`/api/product?page=${page}&search=${this.search}`)
             .then(response => {
                 this.products = response.data
             });
