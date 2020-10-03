@@ -33,14 +33,21 @@
                 <div class="card">
                     <h4 class="card-header">{{ isEditMode ? 'Edit' : 'Create' }}</h4>
                     <div class="card-body">
+
+                        <alert-error :form="product" :message="message"></alert-error>
+
                         <form @submit.prevent="isEditMode ? update() : store()">
                             <div class="form-group">
                                 <label>Name: </label>
-                                <input v-model="product.name" type="text" class="form-control" />
+                                <input v-model="product.name" type="text" class="form-control" 
+                                :class="{ 'is-invalid': product.errors.has('name') }"/>
+                                <has-error :form="product" field="name"></has-error>
                             </div>
                             <div class="form-group">
                                 <label>Price: </label>
-                                <input v-model="product.price" type="number" class="form-control" />
+                                <input v-model="product.price" type="number" class="form-control" 
+                                :class="{ 'is-invalid': product.errors.has('name') }"/>
+                                <has-error :form="product" field="price"></has-error>
                             </div>
                             <button class="btn btn-primary" type="submit">
                                 <i class="fas fa-save mr-1"></i> Save
@@ -86,6 +93,9 @@
 </template>
 
 <script>
+
+// import { Form } from 'vform'
+
 export default {
     name: 'ProductComponent',
     data() {
@@ -93,11 +103,12 @@ export default {
             isEditMode: false,
             search: '',
             products: {},
-            product: {
+            product: new Form({
                 id: '',
                 name: '',
                 price: ''
-            }
+            }),
+            message: ""
         }
     },
     methods: {
@@ -108,33 +119,30 @@ export default {
             });
         },
         create() {
+            this.product.clear();
             this.isEditMode = false;
-            this.product.id = '';
-            this.product.name = '';
-            this.product.price = '';
+            this.product.reset();
         },
         store() {
-            axios.post('/api/product', this.product)
+            this.product.post('/api/product')
             .then(response => {
                 this.view();
-                this.product.id = "";
-                this.product.name = "";
-                this.product.price = "";
+                this.product.reset();
+            })
+            .catch(error => {
+                this.message = error.response.data.message;
             });
         },
         edit(product) {
+            this.product.clear();
             this.isEditMode = true;
-            this.product.id = product.id;
-            this.product.name = product.name;
-            this.product.price = product.price;
+            this.product.fill(product);
         },
         update() {
-            axios.put(`/api/product/${this.product.id}`, this.product)
+            this.product.put(`/api/product/${this.product.id}`)
             .then(response => {
                 this.view();
-                this.product.id = "";
-                this.product.name = "";
-                this.product.price = "";
+                this.product.reset();
             })
         },
         destroy(id) {
