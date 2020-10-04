@@ -31,23 +31,45 @@
         <div class="row">
             <div class="col-4">
                 <div class="card">
-                    <h4 class="card-header">{{ isEditMode ? 'Edit' : 'Create' }}</h4>
+                    <h4 class="card-header">
+                        {{ isEditMode ? "Edit" : "Create" }}
+                    </h4>
                     <div class="card-body">
-
-                        <alert-error :form="product" :message="message"></alert-error>
+                        <alert-error
+                            :form="product"
+                            :message="message"
+                        ></alert-error>
 
                         <form @submit.prevent="isEditMode ? update() : store()">
                             <div class="form-group">
                                 <label>Name: </label>
-                                <input v-model="product.name" type="text" class="form-control" 
-                                :class="{ 'is-invalid': product.errors.has('name') }"/>
-                                <has-error :form="product" field="name"></has-error>
+                                <input
+                                    v-model="product.name"
+                                    type="text"
+                                    class="form-control"
+                                    :class="{
+                                        'is-invalid': product.errors.has('name')
+                                    }"
+                                />
+                                <has-error
+                                    :form="product"
+                                    field="name"
+                                ></has-error>
                             </div>
                             <div class="form-group">
                                 <label>Price: </label>
-                                <input v-model="product.price" type="number" class="form-control" 
-                                :class="{ 'is-invalid': product.errors.has('name') }"/>
-                                <has-error :form="product" field="price"></has-error>
+                                <input
+                                    v-model="product.price"
+                                    type="number"
+                                    class="form-control"
+                                    :class="{
+                                        'is-invalid': product.errors.has('name')
+                                    }"
+                                />
+                                <has-error
+                                    :form="product"
+                                    field="price"
+                                ></has-error>
                             </div>
                             <button class="btn btn-primary" type="submit">
                                 <i class="fas fa-save mr-1"></i> Save
@@ -72,10 +94,16 @@
                             <td>{{ product.name }}</td>
                             <td>{{ product.price }}</td>
                             <td>
-                                <button class="btn btn-success btn-sm" @click="edit(product)">
+                                <button
+                                    class="btn btn-success btn-sm"
+                                    @click="edit(product)"
+                                >
                                     <i class="fas fa-edit mr-1"></i> Edit
                                 </button>
-                                <button class="btn btn-danger btn-sm" @click="destroy(product.id)">
+                                <button
+                                    class="btn btn-danger btn-sm"
+                                    @click="destroy(product.id)"
+                                >
                                     <i class="fas fa-trash-alt mr-1"></i> Delete
                                 </button>
                             </td>
@@ -83,40 +111,48 @@
                     </tbody>
                 </table>
 
-                <pagination :data="products" @pagination-change-page="view"></pagination>
+                <pagination
+                    :data="products"
+                    @pagination-change-page="view"
+                ></pagination>
             </div>
         </div>
-         <!-- Table End-->
-
-        
+        <!-- Table End-->
     </div>
 </template>
 
 <script>
-
-// import { Form } from 'vform'
-
 export default {
-    name: 'ProductComponent',
+    name: "ProductComponent",
     data() {
         return {
             isEditMode: false,
-            search: '',
+            search: "",
             products: {},
             product: new Form({
-                id: '',
-                name: '',
-                price: ''
+                id: "",
+                name: "",
+                price: ""
             }),
             message: ""
-        }
+        };
     },
     methods: {
         view(page = 1) {
-            axios.get(`/api/product?page=${page}&search=${this.search}`)
-            .then(response => {
-                this.products = response.data
-            });
+            this.$Progress.start();
+            let loader = this.$loading.show();
+
+            axios
+                .get(`/api/product?page=${page}&search=${this.search}`)
+                .then(response => {
+                    this.products = response.data;
+                    this.$Progress.finish();
+                    loader.hide();
+                })
+                .catch(error => {
+                    this.$Progress.fail();
+                    loader.hide();
+                });
         },
         create() {
             this.product.clear();
@@ -124,14 +160,19 @@ export default {
             this.product.reset();
         },
         store() {
-            this.product.post('/api/product')
-            .then(response => {
-                this.view();
-                this.product.reset();
-            })
-            .catch(error => {
-                this.message = error.response.data.message;
-            });
+            this.product
+                .post("/api/product")
+                .then(response => {
+                    this.view();
+                    this.product.reset();
+                    Toast.fire({
+                        icon: "success",
+                        title: "Created successfully"
+                    });
+                })
+                .catch(error => {
+                    this.message = error.response.data.message;
+                });
         },
         edit(product) {
             this.product.clear();
@@ -139,20 +180,37 @@ export default {
             this.product.fill(product);
         },
         update() {
-            this.product.put(`/api/product/${this.product.id}`)
-            .then(response => {
-                this.view();
-                this.product.reset();
-            })
+            this.product
+                .put(`/api/product/${this.product.id}`)
+                .then(response => {
+                    this.view();
+                    this.product.reset();
+                    Toast.fire({
+                        icon: "success",
+                        title: "Deleted successfully"
+                    });
+                });
         },
         destroy(id) {
-
-            if(! confirm('Are you sure to delete?')) {
-                return;
-            }
-
-            axios.delete(`/api/product/${id}`)
-                .then(response => this.view());
+            Swal.fire({
+                title: "Are you sure?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Delete"
+            }).then(result => {
+                if (result.isConfirmed) {
+                    axios.delete(`/api/product/${id}`).then(response => {
+                        this.view();
+                        Swal.fire({ title: "Deleted!", icon: "success" });
+                        Toast.fire({
+                            icon: "success",
+                            title: "Deleted successfully"
+                        });
+                    });
+                }
+            });
         }
     },
     created() {

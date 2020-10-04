@@ -17,6 +17,7 @@
 
     <div id="app">
         <product-component></product-component>
+        <vue-progress-bar></vue-progress-bar>
     </div>
 
 
